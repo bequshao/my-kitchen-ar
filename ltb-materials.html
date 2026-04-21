@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AI სამზარეულოს დიზაინერი (AR)</title>
+    
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    
+    <style>
+        /* ზოგადი სტილი */
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #fafafa; overflow: hidden; }
+        .container { display: flex; flex-direction: column; align-items: center; height: 100vh; justify-content: space-between; }
+        
+        /* 3D ვიუერი - იკავებს მთელ ეკრანს */
+        model-viewer {
+            width: 100%;
+            height: 80vh; /* იტოვებს ადგილს მართვის პანელისთვის */
+            background-color: #ffffff;
+            --poster-color: transparent;
+        }
+
+        /* პრემიუმ AR ღილაკი აიფონისთვის */
+        #ar-button {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,123,255,0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #ar-button:hover { background-color: #0056b3; }
+
+        /* მართვის პანელი (ფერების შეცვლა) */
+        .controls {
+            width: 100%;
+            padding: 20px 0;
+            background: white;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .controls-title { font-size: 18px; font-weight: bold; color: #333; }
+        
+        /* ფერადი წრეები */
+        .color-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 4px solid #f0f0f0;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .color-option:hover { transform: scale(1.1); }
+        .color-option.active { border-color: #007bff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <model-viewer id="kitchen-model" 
+        src="kitchen.glb" 
+        ios-src="kitchen.usdz"  ar 
+        ar-modes="webxr scene-viewer quick-look" 
+        camera-controls 
+        shadow-intensity="1.5" 
+        exposure="1"
+        environment-image="neutral">
+        
+        <button slot="ar-button" id="ar-button">
+            👋 ნახე შენს ოთახში (AR)
+        </button>
+    </model-viewer>
+
+    <div class="controls">
+        <p class="controls-title">ფერები:</p>
+        <div class="color-option active" style="background: #ffffff;" onclick="changeColor(this, '#ffffff')"></div>
+        <div class="color-option" style="background: #2c3e50;" onclick="changeColor(this, '#2c3e50')"></div>
+        <div class="color-option" style="background: #a52a2a;" onclick="changeColor(this, '#a52a2a')"></div>
+        <div class="color-option" style="background: #e67e22;" onclick="changeColor(this, '#e67e22')"></div>
+    </div>
+</div>
+
+<script>
+    const modelViewer = document.querySelector('#kitchen-model');
+
+    function changeColor(element, colorString) {
+        if (!modelViewer.model) return;
+
+        // აქტიური ფერის მონიშვნა
+        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+        element.classList.add('active');
+
+        // ვპოულობთ მასალებს, რომლებიც კაბინეტებს ეკუთვნის
+        // CGTrader-ის მოდელს შეიძლება განსხვავებული სახელები ჰქონდეს,
+        // ამიტომ ვცდილობთ ვიპოვოთ სახელით "Cabinet", "Door" ან "Material"
+        const material = modelViewer.model.materials.find(m => 
+            m.name.toLowerCase().includes('cabinet') || 
+            m.name.toLowerCase().includes('door') ||
+            m.name.toLowerCase().includes('material')
+        );
+
+        if (material) {
+            material.pbrMetallicRoughness.setBaseColorFactor(colorString);
+        } else {
+            // თუ სახელი ვერ იპოვა, პირველსავე მასალას შეუცვლის
+            modelViewer.model.materials[0].pbrMetallicRoughness.setBaseColorFactor(colorString);
+        }
+    }
+</script>
+
+</body>
+</html>
