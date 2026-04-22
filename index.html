@@ -1,22 +1,138 @@
-const modelViewer = document.querySelector('#kitchen-model');
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Kitchen Configurator</title>
+    
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
-// ფუნქცია, რომელიც ყველაფერს გააფერადებს, რაც კი მოდელშია
-function changeEverything(color) {
-    if (!modelViewer.model) {
-        console.error("მოდელი ჯერ არ ჩატვირთულა!");
-        return;
-    }
-
-    // გადავუყვებით ყველა მასალას, რაც კი სამზარეულოს აქვს
-    modelViewer.model.materials.forEach((material) => {
-        // ვუცვლით ფერს
-        material.pbrMetallicRoughness.setBaseColorFactor(color);
-        
-        // ვთიშავთ ტექსტურას, რომ ფერმა "გამოანათოს"
-        if (material.pbrMetallicRoughness.baseColorTexture) {
-            material.pbrMetallicRoughness.baseColorTexture.setTexture(null);
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
         }
+
+        header {
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* მოდელის კონტეინერი */
+        model-viewer {
+            width: 90%;
+            height: 500px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --poster-color: transparent;
+        }
+
+        /* ღილაკების სტილი */
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            color: white;
+        }
+
+        button:active { transform: scale(0.95); }
+
+        .btn-red { background-color: #e74c3c; }
+        .btn-blue { background-color: #3498db; }
+        .btn-green { background-color: #2ecc71; }
+        .btn-grey { background-color: #7f8c8d; }
+        .btn-reset { background-color: #2c3e50; }
+
+        .loading-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>სამზარეულოს დიზაინერი</h1>
+        <p>შეცვალეთ ფერები და ნახეთ AR-ში</p>
+    </header>
+
+    <model-viewer 
+        id="kitchen-model"
+        src="kitchen.glb" 
+        ios-src="kitchen.usdz" 
+        ar 
+        ar-modes="webxr scene-viewer quick-look" 
+        camera-controls 
+        touch-action="pan-y"
+        shadow-intensity="1"
+        exposure="1"
+        auto-rotate>
         
-        console.log("შეიცვალა მასალა: " + material.name);
-    });
-}
+        <button slot="ar-button" style="background-color: white; border-radius: 8px; border: 1px solid #ccc; position: absolute; top: 16px; right: 16px; padding: 10px; font-weight: bold;">
+            👋 ნახე შენს ოთახში (AR)
+        </button>
+    </model-viewer>
+
+    <div id="status" class="loading-text">დაელოდეთ მოდელის ჩატვირთვას...</div>
+
+    <div class="controls">
+        <button class="btn-red" onclick="applyColor([1, 0.2, 0.2, 1])">წითელი</button>
+        <button class="btn-blue" onclick="applyColor([0.2, 0.4, 1, 1])">ლურჯი</button>
+        <button class="btn-green" onclick="applyColor([0.2, 0.8, 0.2, 1])">მწვანე</button>
+        <button class="btn-grey" onclick="applyColor([0.3, 0.3, 0.3, 1])">ნაცრისფერი</button>
+        <button class="btn-reset" onclick="location.reload()">საწყისი</button>
+    </div>
+
+    <script>
+        const modelViewer = document.querySelector('#kitchen-model');
+        const statusText = document.querySelector('#status');
+
+        // როცა მოდელი ჩაიტვირთება, სტატუსი შეიცვლება
+        modelViewer.addEventListener('load', () => {
+            statusText.innerText = "მოდელი მზად არის!";
+            console.log("Materials found:", modelViewer.model.materials.map(m => m.name));
+        });
+
+        // მთავარი ფუნქცია ფერის შესაცვლელად
+        function applyColor(colorArray) {
+            if (!modelViewer.model || !modelViewer.model.materials) {
+                alert("ჯერ დაელოდეთ მოდელის გამოჩენას!");
+                return;
+            }
+
+            // გადავუყვებით ყველა მასალას და შევუცვლით ფერს
+            modelViewer.model.materials.forEach((material) => {
+                // 1. ვცვლით ბაზისურ ფერს
+                material.pbrMetallicRoughness.setBaseColorFactor(colorArray);
+
+                // 2. თუ მასალას აქვს ტექსტურა (სურათი), ვთიშავთ რომ ფერი გამოჩნდეს
+                if (material.pbrMetallicRoughness.baseColorTexture) {
+                    material.pbrMetallicRoughness.baseColorTexture.setTexture(null);
+                }
+            });
+
+            statusText.innerText = "ფერი განახლდა!";
+        }
+    </script>
+
+</body>
+</html>
