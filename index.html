@@ -3,38 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Kitchen Configurator</title>
+    <title>3D სამზარეულოს კონფიგურატორი</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
     <style>
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f5f5f5;
+            background-color: #f4f4f4;
         }
 
         header {
-            padding: 20px;
+            margin: 20px;
             text-align: center;
         }
 
-        /* მოდელის კონტეინერი */
+        /* მოდელის ზომები */
         model-viewer {
             width: 90%;
             height: 500px;
             background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            --poster-color: transparent;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        /* ღილაკების სტილი */
+        /* ღილაკების პანელი */
         .controls {
-            margin-top: 25px;
+            margin: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-red { background-color: #ff4757; }
+        .btn-blue { background-color: #1e90ff; }
+        .btn-green { background-color: #2ed573; }
+        .btn-reset { background-color: #2f3542; }
+
+        button:hover { opacity: 0.8; transform: scale(1.05); }
+
+        #status {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ჩემი სამზარეულო 3D-ში</h1>
+        <p>აირჩიეთ ფერი და დააჭირეთ AR ღილაკს</p>
+    </header>
+
+    <model-viewer 
+        id="kitchen-model" 
+        src="kitchen.glb" 
+        ios-src="kitchen.usdz" 
+        ar 
+        ar-modes="webxr scene-viewer quick-look" 
+        camera-controls 
+        shadow-intensity="1"
+        auto-rotate>
+        
+        <button slot="ar-button" id="ar-button" style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            👋 ნახე ოთახში
+        </button>
+    </model-viewer>
+
+    <div id="status">მოდელი იტვირთება...</div>
+
+    <div class="controls">
+        <button class="btn-red" onclick="changeColor([1, 0, 0, 1])">წითელი</button>
+        <button class="btn-blue" onclick="changeColor([0, 0, 1, 1])">ლურჯი</button>
+        <button class="btn-green" onclick="changeColor([0, 1, 0, 1])">მწვანე</button>
+        <button class="btn-reset" onclick="location.reload()">საწყისი</button>
+    </div>
+
+    <script>
+        const modelViewer = document.querySelector('#kitchen-model');
+
+        // როცა მოდელი ჩაიტვირთება
+        modelViewer.addEventListener('load', () => {
+            document.querySelector('#status').innerText = "მზად არის!";
+        });
+
+        // ფერის შეცვლის ფუნქცია
+        function changeColor(colorArray) {
+            if (!modelViewer.model) {
+                alert("დაელოდეთ მოდელის ჩატვირთვას!");
+                return;
+            }
+
+            // გადავუყვებით ყველა მასალას და შევუცვლით ფერს
+            modelViewer.model.materials.forEach((material) => {
+                // ვცვლით ძირითად ფერს
+                material.pbrMetallicRoughness.setBaseColorFactor(colorArray);
+                
+                // ვთიშავთ ტექსტურას, რომ ახალი ფერი გამოჩნდეს
+                if (material.pbrMetallicRoughness.baseColorTexture) {
+                    material.pbrMetallicRoughness.baseColorTexture.setTexture(null);
+                }
+            });
+            
+            console.log("ფერი შეიცვალა!");
+        }
+    </script>
+</body>
+</html>            margin-top: 25px;
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
